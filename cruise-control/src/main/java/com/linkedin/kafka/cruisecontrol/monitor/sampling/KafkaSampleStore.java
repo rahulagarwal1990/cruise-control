@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import kafka.admin.AdminUtils;
 import kafka.admin.RackAwareMode;
-import kafka.client.ClientUtils;
 import kafka.log.LogConfig;
 import kafka.utils.ZkUtils;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -262,7 +261,8 @@ public class KafkaSampleStore implements SampleStore {
         LOG.warn("There are ongoing partition reassignments for topic {}, skip checking its partition count.", topic);
         return;
       }
-      AdminUtils.addPartitions(zkUtils, topic, partitionCount, "", true, RackAwareMode.Safe$.MODULE$);
+      //Commmenting as we don't want partition increment at all
+      //AdminUtils.addPartitions(zkUtils, topic, partitionCount, "", true, RackAwareMode.Safe$.MODULE$);
       LOG.info("Kafka topic " + topic + " now has " + partitionCount + " partitions.");
     }
   }
@@ -273,22 +273,7 @@ public class KafkaSampleStore implements SampleStore {
                                   long retentionMs,
                                   int replicationFactor,
                                   int partitionCount) {
-    Properties props = new Properties();
-    props.setProperty(LogConfig.RetentionMsProp(), Long.toString(retentionMs));
-    props.setProperty(LogConfig.CleanupPolicyProp(), DEFAULT_CLEANUP_POLICY);
-    if (!allTopics.contains(topic)) {
-      AdminUtils.createTopic(zkUtils, topic, partitionCount, replicationFactor, props, RackAwareMode.Safe$.MODULE$);
-    } else {
-      try {
-        AdminUtils.changeTopicConfig(zkUtils, topic, props);
-        MetadataResponse.TopicMetadata topicMetadata = ClientUtils.fetchTopicMetadataFromZk(JavaConversions.asScalaSet(Collections.singleton(topic)),
-                                                       zkUtils,
-                                                       ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT)).head();
-        maybeIncreaseTopicPartitionCount(zkUtils, topic, topicMetadata, partitionCount);
-      }  catch (RuntimeException re) {
-        LOG.error("Skip updating configuration of topic " +  topic + " due to exception.", re);
-      }
-    }
+    //Not needed for us
   }
 
   @Override
