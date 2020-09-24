@@ -10,8 +10,8 @@ import org.apache.kafka.clients.NetworkClient;
 import org.apache.kafka.common.metrics.Metrics;
 import org.apache.kafka.common.network.ChannelBuilder;
 import org.apache.kafka.common.network.Selector;
+import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.Time;
-
 
 public class KafkaNetworkClientProvider implements NetworkClientProvider {
 
@@ -35,9 +35,9 @@ public class KafkaNetworkClientProvider implements NetworkClientProvider {
                                            int defaultRequestTimeoutMs,
                                            boolean discoverBrokerVersions,
                                            ApiVersions apiVersions) {
-    return new NetworkClient(new Selector(connectionMaxIdleMS, metrics, time, metricGrpPrefix, channelBuilder),
+    return new NetworkClient(new Selector(connectionMaxIdleMS, metrics, time, metricGrpPrefix, channelBuilder, new LogContext()),
                              metadata, clientId, maxInFlightRequestsPerConnection, reconnectBackoffMs,
-                             reconnectBackoffMax, socketSendBuffer, socketReceiveBuffer, defaultRequestTimeoutMs, time,
-                             discoverBrokerVersions, apiVersions);
+                             reconnectBackoffMax, socketSendBuffer, socketReceiveBuffer, defaultRequestTimeoutMs,
+                              time, discoverBrokerVersions, apiVersions, new LogContext());
   }
 }

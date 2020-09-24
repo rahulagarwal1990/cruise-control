@@ -1021,6 +1021,7 @@ public class KafkaCruiseControl {
                                                       boolean excludeRecentlyDemotedBrokers,
                                                       boolean excludeRecentlyRemovedBrokers,
                                                       boolean dryRun,
+                                                      Long replicationThrottle,
                                                       String uuid)
       throws KafkaCruiseControlException {
     sanityCheckDryRun(dryRun);
@@ -1071,7 +1072,7 @@ public class KafkaCruiseControl {
       if (!dryRun) {
         executeProposals(result.goalProposals(), Collections.emptySet(), false,
                          concurrentInterBrokerPartitionMovements, concurrentLeaderMovements, executionProgressCheckIntervalMs,
-                         replicaMovementStrategy, uuid);
+                         replicaMovementStrategy,replicationThrottle, uuid);
       }
     } catch (KafkaCruiseControlException kcce) {
       throw kcce;

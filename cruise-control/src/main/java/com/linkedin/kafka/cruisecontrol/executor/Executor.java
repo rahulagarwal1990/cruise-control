@@ -721,7 +721,7 @@ public class Executor {
     }
 
     private void interBrokerMoveReplicas() {
-      ReplicationThrottleHelper throttleHelper = new ReplicationThrottleHelper(_kafkaZkClient, _replicationThrottle);
+      ReplicationThrottleHelper throttleHelper = new ReplicationThrottleHelper(_zkUtils, _replicationThrottle);
       int numTotalPartitionMovements = _executionTaskManager.numRemainingInterBrokerPartitionMovements();
       long totalDataToMoveInMB = _executionTaskManager.remainingInterBrokerDataToMoveInMB();
       LOG.info("Starting {} inter-broker partition movements.", numTotalPartitionMovements);

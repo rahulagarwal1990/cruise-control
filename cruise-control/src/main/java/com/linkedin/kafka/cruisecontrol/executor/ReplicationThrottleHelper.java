@@ -1,11 +1,11 @@
 package com.linkedin.kafka.cruisecontrol.executor;
 
 import com.linkedin.kafka.cruisecontrol.model.ReplicaPlacementInfo;
+import kafka.admin.AdminUtils;
 import kafka.log.LogConfig;
 import kafka.server.ConfigType;
 import kafka.server.DynamicConfig;
-import kafka.zk.AdminZkClient;
-import kafka.zk.KafkaZkClient;
+import kafka.utils.ZkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,14 +30,11 @@ class ReplicationThrottleHelper {
     static final String FOLLOWER_THROTTLED_RATE = DynamicConfig.Broker$.MODULE$.FollowerReplicationThrottledRateProp();
     static final String LEADER_THROTTLED_REPLICAS = LogConfig.LeaderReplicationThrottledReplicasProp();
     static final String FOLLOWER_THROTTLED_REPLICAS = LogConfig.FollowerReplicationThrottledReplicasProp();
-
-    private final KafkaZkClient _kafkaZkClient;
-    private final AdminZkClient _adminZkClient;
     private final Long _throttleRate;
+    ZkUtils zkUtils;
 
-    ReplicationThrottleHelper(KafkaZkClient kafkaZkClient, Long throttleRate) {
-        this._kafkaZkClient = kafkaZkClient;
-        this._adminZkClient = new AdminZkClient(kafkaZkClient);
+    ReplicationThrottleHelper(ZkUtils zkUtils, Long throttleRate) {
+        zkUtils = zkUtils;
         this._throttleRate = throttleRate;
     }
 
@@ -150,11 +147,11 @@ class ReplicationThrottleHelper {
     private void setThrottledRateIfUnset(int brokerId, String configKey) {
         assert (_throttleRate != null);
         assert (configKey.equals(LEADER_THROTTLED_RATE) || configKey.equals(FOLLOWER_THROTTLED_RATE));
-        Properties config = _kafkaZkClient.getEntityConfigs(ConfigType.Broker(), String.valueOf(brokerId));
+        Properties config = AdminUtils.fetchEntityConfig(zkUtils, ConfigType.Broker(), String.valueOf(brokerId));
         Object oldThrottleRate = config.setProperty(configKey, String.valueOf(_throttleRate));
         if (oldThrottleRate == null) {
             LOG.debug("Setting {} to {} bytes/second for broker {}", configKey, _throttleRate, brokerId);
-            ExecutorUtils.changeBrokerConfig(_adminZkClient, brokerId, config);
+            ExecutorUtils.changeBrokerConfig(zkUtils, brokerId, config);
         } else {
             LOG.debug("Not setting {} for broker {} because pre-existing throttle of {} was already set",
                     configKey, brokerId, oldThrottleRate);
@@ -171,7 +168,7 @@ class ReplicationThrottleHelper {
 
     private void setThrottledReplicas(String topic, Set<String> replicas, String configKey) {
         assert (configKey.equals(LEADER_THROTTLED_REPLICAS) || configKey.equals(FOLLOWER_THROTTLED_REPLICAS));
-        Properties config = _kafkaZkClient.getEntityConfigs(ConfigType.Topic(), topic);
+        Properties config = AdminUtils.fetchEntityConfig(zkUtils, ConfigType.Topic(), topic);
         // Merge new throttled replicas with existing configuration values.
         Set<String> newThrottledReplicas = new TreeSet<>(replicas);
         String oldThrottledReplicas = config.getProperty(configKey);
@@ -179,7 +176,7 @@ class ReplicationThrottleHelper {
             newThrottledReplicas.addAll(Arrays.asList(oldThrottledReplicas.split(",")));
         }
         config.setProperty(configKey, String.join(",", newThrottledReplicas));
-        ExecutorUtils.changeTopicConfig(_adminZkClient, topic, config);
+        ExecutorUtils.changeTopicConfig(zkUtils, topic, config);
     }
 
     static String removeReplicasFromConfig(String throttleConfig, Set<String> replicas) {
@@ -215,14 +212,14 @@ class ReplicationThrottleHelper {
     }
 
     private void removeThrottledReplicasFromTopic(String topic, Set<String> replicas) {
-        Properties config = _kafkaZkClient.getEntityConfigs(ConfigType.Topic(), topic);
+        Properties config = AdminUtils.fetchEntityConfig(zkUtils, ConfigType.Topic(), topic);
         removeLeaderThrottledReplicasFromTopic(config, topic, replicas);
         removeFollowerThrottledReplicasFromTopic(config, topic, replicas);
-        ExecutorUtils.changeTopicConfig(_adminZkClient, topic, config);
+        ExecutorUtils.changeTopicConfig(zkUtils, topic, config);
     }
 
     private void removeAllThrottledReplicasFromTopic(String topic) {
-        Properties config = _kafkaZkClient.getEntityConfigs(ConfigType.Topic(), topic);
+        Properties config = AdminUtils.fetchEntityConfig(zkUtils, ConfigType.Topic(), topic);
         Object oldLeaderThrottle = config.remove(LEADER_THROTTLED_REPLICAS);
         Object oldFollowerThrottle = config.remove(FOLLOWER_THROTTLED_REPLICAS);
         if (oldLeaderThrottle != null) {
@@ -232,12 +229,12 @@ class ReplicationThrottleHelper {
             LOG.debug("Removing follower throttled replicas for topic {}", topic);
         }
         if (oldLeaderThrottle != null || oldFollowerThrottle != null) {
-            ExecutorUtils.changeTopicConfig(_adminZkClient, topic, config);
+            ExecutorUtils.changeTopicConfig(zkUtils, topic, config);
         }
     }
 
     private void removeThrottledRateFromBroker(Integer brokerId) {
-        Properties config = _kafkaZkClient.getEntityConfigs(ConfigType.Broker(), String.valueOf(brokerId));
+        Properties config = AdminUtils.fetchEntityConfig(zkUtils, ConfigType.Broker(), String.valueOf(brokerId));
         Object oldLeaderThrottle = config.remove(LEADER_THROTTLED_RATE);
         Object oldFollowerThrottle = config.remove(FOLLOWER_THROTTLED_RATE);
         if (oldLeaderThrottle != null) {
@@ -247,7 +244,7 @@ class ReplicationThrottleHelper {
             LOG.debug("Removing follower throttle on broker {}", brokerId);
         }
         if (oldLeaderThrottle != null || oldFollowerThrottle != null) {
-            ExecutorUtils.changeBrokerConfig(_adminZkClient, brokerId, config);
+            ExecutorUtils.changeBrokerConfig(zkUtils, brokerId, config);
         }
     }
 }

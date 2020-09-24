@@ -54,6 +54,7 @@ public class UpdateTopicConfigurationRunnable extends OperationRunnable {
                                                            _topicReplicationFactorChangeParameters.excludeRecentlyDemotedBrokers(),
                                                            _topicReplicationFactorChangeParameters.excludeRecentlyRemovedBrokers(),
                                                            _topicReplicationFactorChangeParameters.dryRun(),
+                                                           _topicReplicationFactorChangeParameters.replicationThrottling(),
                                                            _uuid),
           _config);
     }

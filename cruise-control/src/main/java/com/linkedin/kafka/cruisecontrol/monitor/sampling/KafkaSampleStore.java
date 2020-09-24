@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import kafka.admin.AdminUtils;
 import kafka.admin.RackAwareMode;
+import kafka.client.ClientUtils;
 import kafka.log.LogConfig;
 import kafka.utils.ZkUtils;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -44,7 +45,7 @@ import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.network.ListenerName;
-import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.requests.MetadataResponse;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -280,7 +281,7 @@ public class KafkaSampleStore implements SampleStore {
     } else {
       try {
         AdminUtils.changeTopicConfig(zkUtils, topic, props);
-        MetadataResponse.TopicMetadata topicMetadata = AdminUtils.fetchTopicMetadataFromZk(JavaConversions.asScalaSet(Collections.singleton(topic)),
+        MetadataResponse.TopicMetadata topicMetadata = ClientUtils.fetchTopicMetadataFromZk(JavaConversions.asScalaSet(Collections.singleton(topic)),
                                                        zkUtils,
                                                        ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT)).head();
         maybeIncreaseTopicPartitionCount(zkUtils, topic, topicMetadata, partitionCount);

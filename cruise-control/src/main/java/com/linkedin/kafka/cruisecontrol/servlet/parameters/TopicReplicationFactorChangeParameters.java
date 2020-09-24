@@ -22,7 +22,7 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.EXECUTION_PROGRESS_CHECK_INTERVAL_MS_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REPLICA_MOVEMENT_STRATEGIES_PARAM;
-
+import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REPLICATION_THROTTLE_PARAM;
 
 /**
  * Optional parameters for {@link com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint#TOPIC_CONFIGURATION}.
@@ -42,6 +42,7 @@ public class TopicReplicationFactorChangeParameters extends GoalBasedOptimizatio
     validParameterNames.add(SKIP_HARD_GOAL_CHECK_PARAM);
     validParameterNames.add(REPLICA_MOVEMENT_STRATEGIES_PARAM);
     validParameterNames.addAll(GoalBasedOptimizationParameters.CASE_INSENSITIVE_PARAMETER_NAMES);
+    validParameterNames.add(REPLICATION_THROTTLE_PARAM);
     CASE_INSENSITIVE_PARAMETER_NAMES = Collections.unmodifiableSortedSet(validParameterNames);
   }
   protected Map<Short, Pattern> _topicPatternByReplicationFactor;
@@ -52,6 +53,7 @@ public class TopicReplicationFactorChangeParameters extends GoalBasedOptimizatio
   protected Long _executionProgressCheckIntervalMs;
   protected boolean _skipHardGoalCheck;
   protected ReplicaMovementStrategy _replicaMovementStrategy;
+  protected Long _replicationThrottling;
 
   protected TopicReplicationFactorChangeParameters() {
     super();
@@ -71,6 +73,7 @@ public class TopicReplicationFactorChangeParameters extends GoalBasedOptimizatio
     _executionProgressCheckIntervalMs = ParameterUtils.executionProgressCheckIntervalMs(_request);
     _skipHardGoalCheck = ParameterUtils.skipHardGoalCheck(_request);
     _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_request, _config);
+    _replicationThrottling = ParameterUtils.replicationThrottle(_request, _config);
   }
 
   /**
@@ -122,6 +125,10 @@ public class TopicReplicationFactorChangeParameters extends GoalBasedOptimizatio
 
   public ReplicaMovementStrategy replicaMovementStrategy() {
     return _replicaMovementStrategy;
+  }
+
+  public Long replicationThrottling() {
+    return _replicationThrottling;
   }
 
   @Override
