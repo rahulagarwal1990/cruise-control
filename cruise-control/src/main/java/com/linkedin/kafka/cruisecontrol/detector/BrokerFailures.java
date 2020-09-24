@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.linkedin.kafka.cruisecontrol.config.KafkaCruiseControlConfig;
 
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.toDateString;
 
@@ -29,6 +30,7 @@ public class BrokerFailures extends KafkaAnomaly {
   private final boolean _excludeRecentlyRemovedBrokers;
   private final String _anomalyId;
   private final List<String> _selfHealingGoals;
+  private final Long _replicationThrottle;
 
   /**
    * An anomaly to indicate broker failure(s).
@@ -57,6 +59,11 @@ public class BrokerFailures extends KafkaAnomaly {
     _anomalyId = String.format("%s-%s", ID_PREFIX, UUID.randomUUID().toString().substring(ID_PREFIX.length() + 1));
     _optimizationResult = null;
     _selfHealingGoals = selfHealingGoals;
+    if (_kafkaCruiseControl != null && _kafkaCruiseControl.config() != null) {
+      _replicationThrottle = _kafkaCruiseControl.config().getLong(KafkaCruiseControlConfig.DEFAULT_REPLICATION_THROTTLE_CONFIG);
+    } else {
+      _replicationThrottle = null;
+    }
   }
 
   /**
@@ -88,7 +95,7 @@ public class BrokerFailures extends KafkaAnomaly {
                                                                                            null,
                                                                                            null,
                                                                                            null,
-                                                                                           null,
+                                                                                           _replicationThrottle,
                                                                                            _anomalyId,
                                                                                            _excludeRecentlyDemotedBrokers,
                                                                                            _excludeRecentlyRemovedBrokers,
