@@ -37,6 +37,7 @@ class DecommissionBrokersRunnable extends OperationRunnable {
   private final boolean _excludeRecentlyRemovedBrokers;
   private final ReplicaMovementStrategy _replicaMovementStrategy;
   private final KafkaCruiseControlConfig _config;
+  private final Long _replicationThrottle;
 
   DecommissionBrokersRunnable(KafkaCruiseControl kafkaCruiseControl,
                               OperationFuture future,
@@ -56,6 +57,7 @@ class DecommissionBrokersRunnable extends OperationRunnable {
     _skipHardGoalCheck = parameters.skipHardGoalCheck();
     _excludedTopics = parameters.excludedTopics();
     _replicaMovementStrategy = parameters.replicaMovementStrategy();
+    _replicationThrottle = parameters.replicationThrottle();
     _uuid = uuid;
     _excludeRecentlyDemotedBrokers = parameters.excludeRecentlyDemotedBrokers();
     _excludeRecentlyRemovedBrokers = parameters.excludeRecentlyRemovedBrokers();
@@ -77,6 +79,7 @@ class DecommissionBrokersRunnable extends OperationRunnable {
                                                                           _excludedTopics,
                                                                           null,
                                                                           _replicaMovementStrategy,
+            _replicationThrottle,
                                                                           _uuid,
                                                                           _excludeRecentlyDemotedBrokers,
                                                                           _excludeRecentlyRemovedBrokers,

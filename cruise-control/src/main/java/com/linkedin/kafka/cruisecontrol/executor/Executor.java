@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.currentUtcDate;
 import static com.linkedin.kafka.cruisecontrol.KafkaCruiseControlUtils.OPERATION_LOGGER;
@@ -324,10 +325,11 @@ public class Executor {
                                             Integer requestedLeadershipMovementConcurrency,
                                             Long requestedExecutionProgressCheckIntervalMs,
                                             ReplicaMovementStrategy replicaMovementStrategy,
+                                            Long replicationThrottle,
                                             String uuid) {
     initProposalExecution(proposals, unthrottledBrokers, loadMonitor, requestedInterBrokerPartitionMovementConcurrency,
                           requestedLeadershipMovementConcurrency, requestedExecutionProgressCheckIntervalMs, replicaMovementStrategy, uuid);
-    startExecution(loadMonitor, null, removedBrokers);
+    startExecution(loadMonitor, null, removedBrokers, replicationThrottle);
   }
 
   private synchronized void initProposalExecution(Collection<ExecutionProposal> proposals,
@@ -378,10 +380,11 @@ public class Executor {
                                                   Integer requestedLeadershipMovementConcurrency,
                                                   Long requestedExecutionProgressCheckIntervalMs,
                                                   ReplicaMovementStrategy replicaMovementStrategy,
+                                                  Long replicationThrottle,
                                                   String uuid) {
     initProposalExecution(proposals, demotedBrokers, loadMonitor, concurrentSwaps, requestedLeadershipMovementConcurrency,
                           requestedExecutionProgressCheckIntervalMs, replicaMovementStrategy, uuid);
-    startExecution(loadMonitor, demotedBrokers, null);
+    startExecution(loadMonitor, demotedBrokers, null, replicationThrottle);
   }
 
   /**
@@ -444,7 +447,8 @@ public class Executor {
    * @param demotedBrokers Brokers to be demoted, null if no broker has been demoted.
    * @param removedBrokers Brokers to be removed, null if no broker has been removed.
    */
-  private void startExecution(LoadMonitor loadMonitor, Collection<Integer> demotedBrokers, Collection<Integer> removedBrokers) {
+  private void startExecution(LoadMonitor loadMonitor, Collection<Integer> demotedBrokers,
+                              Collection<Integer> removedBrokers, Long replicationThrottle) {
     // Note that in case there is an ongoing partition reassignment, we do not unpause metric sampling.
     _executionStoppedByUser.set(false);
     if (hasOngoingPartitionReassignments()) {
@@ -462,7 +466,7 @@ public class Executor {
     } else {
       _numExecutionStartedInNonKafkaAssignerMode.incrementAndGet();
     }
-    _proposalExecutor.submit(new ProposalExecutionRunnable(loadMonitor, demotedBrokers, removedBrokers));
+    _proposalExecutor.submit(new ProposalExecutionRunnable(loadMonitor, demotedBrokers, removedBrokers, replicationThrottle));
   }
 
   /**
@@ -544,10 +548,12 @@ public class Executor {
     private ExecutorState.State _state;
     private Set<Integer> _recentlyDemotedBrokers;
     private Set<Integer> _recentlyRemovedBrokers;
+    private final Long _replicationThrottle;
     private final long _executionStartMs;
     private Throwable _executionException;
 
-    ProposalExecutionRunnable(LoadMonitor loadMonitor, Collection<Integer> demotedBrokers, Collection<Integer> removedBrokers) {
+    ProposalExecutionRunnable(LoadMonitor loadMonitor, Collection<Integer> demotedBrokers,
+                              Collection<Integer> removedBrokers, Long replicationThrottle) {
       _loadMonitor = loadMonitor;
       _state = NO_TASK_IN_PROGRESS;
       _executionStartMs = _time.milliseconds();
@@ -570,6 +576,7 @@ public class Executor {
       }
       _recentlyDemotedBrokers = recentlyDemotedBrokers();
       _recentlyRemovedBrokers = recentlyRemovedBrokers();
+      _replicationThrottle = replicationThrottle;
     }
 
     public void run() {
@@ -714,6 +721,7 @@ public class Executor {
     }
 
     private void interBrokerMoveReplicas() {
+      ReplicationThrottleHelper throttleHelper = new ReplicationThrottleHelper(_kafkaZkClient, _replicationThrottle);
       int numTotalPartitionMovements = _executionTaskManager.numRemainingInterBrokerPartitionMovements();
       long totalDataToMoveInMB = _executionTaskManager.remainingInterBrokerDataToMoveInMB();
       LOG.info("Starting {} inter-broker partition movements.", numTotalPartitionMovements);
@@ -726,12 +734,14 @@ public class Executor {
         LOG.info("Executor will execute {} task(s)", tasksToExecute.size());
 
         if (!tasksToExecute.isEmpty()) {
+          throttleHelper.setThrottles(
+                  tasksToExecute.stream().map(ExecutionTask::proposal).collect(Collectors.toList()));
           // Execute the tasks.
           _executionTaskManager.markTasksInProgress(tasksToExecute);
           ExecutorUtils.executeReplicaReassignmentTasks(_zkUtils, tasksToExecute);
         }
         // Wait indefinitely for partition movements to finish.
-        waitForExecutionTaskToFinish();
+        List<ExecutionTask> completedTasks = waitForExecutionTaskToFinish();
         partitionsToMove = _executionTaskManager.numRemainingInterBrokerPartitionMovements();
         int numFinishedPartitionMovements = _executionTaskManager.numFinishedInterBrokerPartitionMovements();
         long finishedDataMovementInMB = _executionTaskManager.finishedInterBrokerDataMovementInMB();
@@ -742,6 +752,7 @@ public class Executor {
                  finishedDataMovementInMB, totalDataToMoveInMB,
                  totalDataToMoveInMB == 0 ? 100 : String.format(java.util.Locale.US, "%.2f",
                                                   (finishedDataMovementInMB * 100.0) / totalDataToMoveInMB));
+        throttleHelper.clearThrottles(completedTasks, tasksToExecute.stream().filter(t -> t.state() == IN_PROGRESS).collect(Collectors.toList()));
       }
       // After the partition movement finishes, wait for the controller to clean the reassignment zkPath. This also
       // ensures a clean stop when the execution is stopped in the middle.
@@ -749,8 +760,9 @@ public class Executor {
       while (!inExecutionTasks.isEmpty()) {
         LOG.info("Waiting for {} tasks moving {} MB to finish: {}", inExecutionTasks.size(),
                  _executionTaskManager.inExecutionInterBrokerDataToMoveInMB(), inExecutionTasks);
-        waitForExecutionTaskToFinish();
+        List<ExecutionTask> completedRemainingTasks = waitForExecutionTaskToFinish();
         inExecutionTasks = _executionTaskManager.inExecutionTasks();
+        throttleHelper.clearThrottles(completedRemainingTasks, new ArrayList<>(inExecutionTasks));
       }
       if (_executionTaskManager.inExecutionTasks().isEmpty()) {
         LOG.info("Inter-broker partition movements finished.");
@@ -819,7 +831,7 @@ public class Executor {
     /**
      * This method periodically check zookeeper to see if the partition reassignment has finished or not.
      */
-    private void waitForExecutionTaskToFinish() {
+    private List<ExecutionTask> waitForExecutionTaskToFinish() {
       List<ExecutionTask> finishedTasks = new ArrayList<>();
       do {
         // If there is no finished tasks, we need to check if anything is blocked.
@@ -870,6 +882,7 @@ public class Executor {
         updateOngoingExecutionState();
       } while (!_executionTaskManager.inExecutionTasks().isEmpty() && finishedTasks.isEmpty());
       LOG.info("Completed tasks: {}", finishedTasks);
+      return finishedTasks;
     }
 
     /**

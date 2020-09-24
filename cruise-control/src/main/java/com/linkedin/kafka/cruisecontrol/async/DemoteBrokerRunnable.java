@@ -24,6 +24,7 @@ public class DemoteBrokerRunnable extends OperationRunnable {
   private final Integer _concurrentLeaderMovements;
   private final boolean _skipUrpDemotion;
   private final boolean _excludeFollowerDemotion;
+  private final Long _replicationThrottle;
   private final String _uuid;
   private final boolean _excludeRecentlyDemotedBrokers;
   private final ReplicaMovementStrategy _replicaMovementStrategy;
@@ -42,6 +43,7 @@ public class DemoteBrokerRunnable extends OperationRunnable {
     _skipUrpDemotion = parameters.skipUrpDemotion();
     _excludeFollowerDemotion = parameters.excludeFollowerDemotion();
     _replicaMovementStrategy = parameters.replicaMovementStrategy();
+    _replicationThrottle = parameters.replicationThrottle();
     _uuid = uuid;
     _excludeRecentlyDemotedBrokers = parameters.excludeRecentlyDemotedBrokers();
     _config = config;
@@ -58,6 +60,7 @@ public class DemoteBrokerRunnable extends OperationRunnable {
                                                                     _excludeFollowerDemotion,
                                                                     null,
                                                                     _replicaMovementStrategy,
+            _replicationThrottle,
                                                                     _uuid,
                                                                     _excludeRecentlyDemotedBrokers),
                                   _config);

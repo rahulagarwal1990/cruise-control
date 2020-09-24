@@ -11,6 +11,8 @@ import kafka.common.TopicAndPartition
 import kafka.utils.ZkUtils
 import org.apache.kafka.common.TopicPartition
 import org.slf4j.{Logger, LoggerFactory}
+import java.util.Properties
+import kafka.zk.{AdminZkClient, KafkaZkClient}
 
 import scala.collection.JavaConversions._
 
@@ -123,5 +125,21 @@ object ExecutorUtils {
 
   def currentReplicasForPartition(zkUtils: ZkUtils, tp: TopicPartition): java.util.List[java.lang.Integer] = {
     seqAsJavaList(zkUtils.getReplicasForPartition(tp.topic(), tp.partition()).map(i => i : java.lang.Integer))
+  }
+
+  def changeBrokerConfig(adminZkClient: AdminZkClient, brokerId: Int, config: Properties): Unit = {
+    adminZkClient.changeBrokerConfig(Some(brokerId), config)
+  }
+
+  def changeTopicConfig(adminZkClient: AdminZkClient, topic: String, config: Properties): Unit = {
+    adminZkClient.changeTopicConfig(topic, config)
+  }
+
+  def getAllLiveBrokerIdsInCluster(kafkaZkClient: KafkaZkClient): java.util.List[java.lang.Integer] = {
+    seqAsJavaList(kafkaZkClient.getAllBrokersInCluster.map(_.id : java.lang.Integer))
+  }
+
+  def getAllTopicsInCluster(kafkaZkClient: KafkaZkClient): java.util.List[String] = {
+    seqAsJavaList(kafkaZkClient.getAllTopicsInCluster)
   }
 }

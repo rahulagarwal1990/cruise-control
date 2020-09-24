@@ -195,6 +195,7 @@ public class ExecutorTest extends AbstractKafkaIntegrationTestHarness {
                               null,
                               null,
                               null,
+                              null,
                               RANDOM_UUID);
     // Wait until the execution to start so the task timestamp is set to time.milliseconds.
     while (executor.state().state() != ExecutorState.State.LEADER_MOVEMENT_TASK_IN_PROGRESS) {
@@ -247,7 +248,7 @@ public class ExecutorTest extends AbstractKafkaIntegrationTestHarness {
                                      43200000L, mockExecutorNotifier, mockUserTaskManager, getMockAnomalyDetector(uuid));
     executor.setExecutionMode(false);
     executor.executeProposals(proposalsToExecute, Collections.emptySet(), null, EasyMock.mock(LoadMonitor.class), null,
-                              null, null, null, uuid);
+                              null, null, null, null, uuid);
     waitUntilExecutionFinishes(executor);
 
     ExecutorNotification notification = captureNotification.getValue();
@@ -334,7 +335,7 @@ public class ExecutorTest extends AbstractKafkaIntegrationTestHarness {
                                      getMockAnomalyDetector(RANDOM_UUID));
     executor.setExecutionMode(false);
     executor.executeProposals(proposalsToExecute, Collections.emptySet(), null, EasyMock.mock(LoadMonitor.class), null,
-                              null, null, null, RANDOM_UUID);
+                              null, null, null, null, RANDOM_UUID);
 
     Map<TopicPartition, Integer> replicationFactors = new HashMap<>();
     for (ExecutionProposal proposal : proposalsToCheck) {

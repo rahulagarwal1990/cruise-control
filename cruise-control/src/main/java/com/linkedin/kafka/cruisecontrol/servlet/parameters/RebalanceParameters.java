@@ -70,6 +70,7 @@ public class RebalanceParameters extends GoalBasedOptimizationParameters {
   protected ReplicaMovementStrategy _replicaMovementStrategy;
   protected boolean _ignoreProposalCache;
   protected Set<Integer> _destinationBrokerIds;
+  private Long _replicationThrottle;
   protected Integer _reviewId;
 
   public RebalanceParameters() {
@@ -88,6 +89,7 @@ public class RebalanceParameters extends GoalBasedOptimizationParameters {
     _ignoreProposalCache = ParameterUtils.ignoreProposalCache(_request);
     _destinationBrokerIds = ParameterUtils.destinationBrokerIds(_request);
     boolean twoStepVerificationEnabled = _config.getBoolean(KafkaCruiseControlConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
+    _replicationThrottle = ParameterUtils.replicationThrottle(_request, _config);
     _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
   }
 
@@ -135,6 +137,10 @@ public class RebalanceParameters extends GoalBasedOptimizationParameters {
   @Override
   public void configure(Map<String, ?> configs) {
     super.configure(configs);
+  }
+
+  public Long replicationThrottle() {
+    return _replicationThrottle;
   }
 
   @Override

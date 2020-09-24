@@ -33,6 +33,7 @@ class RebalanceRunnable extends OperationRunnable {
   private final boolean _excludeRecentlyDemotedBrokers;
   private final boolean _excludeRecentlyRemovedBrokers;
   private final ReplicaMovementStrategy _replicaMovementStrategy;
+  private final Long _replicationThrottle;
   private final boolean _ignoreProposalCache;
   private final Set<Integer> _destinationBrokerIds;
   private final KafkaCruiseControlConfig _config;
@@ -52,6 +53,7 @@ class RebalanceRunnable extends OperationRunnable {
     _skipHardGoalCheck = parameters.skipHardGoalCheck();
     _excludedTopics = parameters.excludedTopics();
     _replicaMovementStrategy = parameters.replicaMovementStrategy();
+    _replicationThrottle = parameters.replicationThrottle();
     _uuid = uuid;
     _excludeRecentlyDemotedBrokers = parameters.excludeRecentlyDemotedBrokers();
     _excludeRecentlyRemovedBrokers = parameters.excludeRecentlyRemovedBrokers();
@@ -73,6 +75,7 @@ class RebalanceRunnable extends OperationRunnable {
                                                                 _excludedTopics,
                                                                 null,
                                                                 _replicaMovementStrategy,
+            _replicationThrottle,
                                                                 _uuid,
                                                                 _excludeRecentlyDemotedBrokers,
                                                                 _excludeRecentlyRemovedBrokers,

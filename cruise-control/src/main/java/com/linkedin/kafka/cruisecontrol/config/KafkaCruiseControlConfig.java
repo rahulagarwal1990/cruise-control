@@ -484,6 +484,13 @@ public class KafkaCruiseControlConfig extends AbstractConfig {
       "will also reduce the controller burden.";
 
   /**
+   * <code>default.replication.throttle</code>
+   */
+  public static final String DEFAULT_REPLICATION_THROTTLE_CONFIG = "default.replication.throttle";
+  private static final String DEFAULT_REPLICATION_THROTTLE_DOC = "The replication throttle applied to " +
+          "replicas being moved, in bytes per second.";
+
+  /**
    * <code>max.num.cluster.movements</code>
    */
   public static final String MAX_NUM_CLUSTER_MOVEMENTS_CONFIG = "max.num.cluster.movements";
@@ -1313,6 +1320,11 @@ public class KafkaCruiseControlConfig extends AbstractConfig {
                 atLeast(1),
                 ConfigDef.Importance.MEDIUM,
                 NUM_CONCURRENT_LEADER_MOVEMENTS_DOC)
+            .define(DEFAULT_REPLICATION_THROTTLE_CONFIG,
+                    ConfigDef.Type.LONG,
+                    null,
+                    ConfigDef.Importance.MEDIUM,
+                    DEFAULT_REPLICATION_THROTTLE_DOC)
         .define(MAX_NUM_CLUSTER_MOVEMENTS_CONFIG,
                 ConfigDef.Type.INT,
                 DEFAULT_MAX_NUM_CLUSTER_MOVEMENTS_CONFIG,

@@ -62,6 +62,7 @@ public class DemoteBrokerParameters extends KafkaOptimizationParameters {
   protected boolean _skipUrpDemotion;
   protected boolean _excludeFollowerDemotion;
   protected ReplicaMovementStrategy _replicaMovementStrategy;
+  private Long _replicationThrottle;
   protected Integer _reviewId;
 
   public DemoteBrokerParameters() {
@@ -79,6 +80,7 @@ public class DemoteBrokerParameters extends KafkaOptimizationParameters {
     _skipUrpDemotion = ParameterUtils.skipUrpDemotion(_request);
     _excludeFollowerDemotion = ParameterUtils.excludeFollowerDemotion(_request);
     _replicaMovementStrategy = ParameterUtils.getReplicaMovementStrategy(_request, _config);
+    _replicationThrottle = ParameterUtils.replicationThrottle(_request, _config);
     boolean twoStepVerificationEnabled = _config.getBoolean(KafkaCruiseControlConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
     _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
   }
@@ -118,6 +120,10 @@ public class DemoteBrokerParameters extends KafkaOptimizationParameters {
 
   public ReplicaMovementStrategy replicaMovementStrategy() {
     return _replicaMovementStrategy;
+  }
+
+  public Long replicationThrottle() {
+    return _replicationThrottle;
   }
 
   @Override

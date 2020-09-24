@@ -85,6 +85,7 @@ public class ParameterUtils {
   public static final String DRY_RUN_PARAM = "dryrun";
   public static final String THROTTLE_ADDED_BROKER_PARAM = "throttle_added_broker";
   public static final String THROTTLE_REMOVED_BROKER_PARAM = "throttle_removed_broker";
+  public static final String REPLICATION_THROTTLE_PARAM = "replication_throttle";
   public static final String IGNORE_PROPOSAL_CACHE_PARAM = "ignore_proposal_cache";
   public static final String USE_READY_DEFAULT_GOALS_PARAM = "use_ready_default_goals";
   public static final String EXECUTION_PROGRESS_CHECK_INTERVAL_MS_PARAM = "execution_progress_check_interval_ms";
@@ -134,6 +135,196 @@ public class ParameterUtils {
   public static final String ADMIN_PARAMETER_OBJECT_CONFIG = "admin.parameter.object";
   public static final String REVIEW_PARAMETER_OBJECT_CONFIG = "review.parameter.object";
   public static final String TOPIC_CONFIGURATION_PARAMETER_OBJECT_CONFIG = "topic.configuration.parameter.object";
+  public static final String POPULATE_DISK_INFO_PARAM = "populate_disk_info";
+  public static final String REBALANCE_DISK_MODE_PARAM = "rebalance_disk";
+  public static final String BROKER_ID_AND_LOGDIRS_PARAM = "brokerid_and_logdirs";
+  public static final String CONCURRENT_INTRA_BROKER_PARTITION_MOVEMENTS_PARAM = "concurrent_intra_broker_partition_movements";
+  private static final Map<EndPoint, Set<String>> VALID_ENDPOINT_PARAM_NAMES;
+
+  static {
+    Map<EndPoint, Set<String>> validParamNames = new HashMap<>();
+    Set<String> bootstrap = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    bootstrap.add(START_MS_PARAM);
+    bootstrap.add(END_MS_PARAM);
+    bootstrap.add(CLEAR_METRICS_PARAM);
+    bootstrap.add(JSON_PARAM);
+    Set<String> train = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    train.add(START_MS_PARAM);
+    train.add(END_MS_PARAM);
+    train.add(JSON_PARAM);
+    Set<String> load = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    load.add(TIME_PARAM);
+    load.add(JSON_PARAM);
+    load.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
+    load.add(POPULATE_DISK_INFO_PARAM);
+    Set<String> partitionLoad = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    partitionLoad.add(RESOURCE_PARAM);
+    partitionLoad.add(START_MS_PARAM);
+    partitionLoad.add(END_MS_PARAM);
+    partitionLoad.add(ENTRIES_PARAM);
+    partitionLoad.add(JSON_PARAM);
+    partitionLoad.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
+    partitionLoad.add(MAX_LOAD_PARAM);
+    partitionLoad.add(AVG_LOAD_PARAM);
+    partitionLoad.add(TOPIC_PARAM);
+    partitionLoad.add(PARTITION_PARAM);
+    partitionLoad.add(MIN_VALID_PARTITION_RATIO_PARAM);
+    Set<String> proposals = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    proposals.add(VERBOSE_PARAM);
+    proposals.add(IGNORE_PROPOSAL_CACHE_PARAM);
+    proposals.add(DATA_FROM_PARAM);
+    proposals.add(GOALS_PARAM);
+    proposals.add(KAFKA_ASSIGNER_MODE_PARAM);
+    proposals.add(JSON_PARAM);
+    proposals.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
+    proposals.add(EXCLUDED_TOPICS_PARAM);
+    proposals.add(USE_READY_DEFAULT_GOALS_PARAM);
+    proposals.add(EXCLUDE_RECENTLY_DEMOTED_BROKERS_PARAM);
+    proposals.add(EXCLUDE_RECENTLY_REMOVED_BROKERS_PARAM);
+    proposals.add(DESTINATION_BROKER_IDS_PARAM);
+    proposals.add(REBALANCE_DISK_MODE_PARAM);
+    Set<String> state = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    state.add(VERBOSE_PARAM);
+    state.add(SUPER_VERBOSE_PARAM);
+    state.add(JSON_PARAM);
+    state.add(SUBSTATES_PARAM);
+    Set<String> addRemoveOrFixBroker = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    addRemoveOrFixBroker.add(DRY_RUN_PARAM);
+    addRemoveOrFixBroker.add(DATA_FROM_PARAM);
+    addRemoveOrFixBroker.add(GOALS_PARAM);
+    addRemoveOrFixBroker.add(KAFKA_ASSIGNER_MODE_PARAM);
+    addRemoveOrFixBroker.add(JSON_PARAM);
+    addRemoveOrFixBroker.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
+    addRemoveOrFixBroker.add(CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM);
+    addRemoveOrFixBroker.add(CONCURRENT_LEADER_MOVEMENTS_PARAM);
+    addRemoveOrFixBroker.add(SKIP_HARD_GOAL_CHECK_PARAM);
+    addRemoveOrFixBroker.add(EXCLUDED_TOPICS_PARAM);
+    addRemoveOrFixBroker.add(USE_READY_DEFAULT_GOALS_PARAM);
+    addRemoveOrFixBroker.add(VERBOSE_PARAM);
+    addRemoveOrFixBroker.add(EXCLUDE_RECENTLY_DEMOTED_BROKERS_PARAM);
+    addRemoveOrFixBroker.add(EXCLUDE_RECENTLY_REMOVED_BROKERS_PARAM);
+    addRemoveOrFixBroker.add(REPLICA_MOVEMENT_STRATEGIES_PARAM);
+    addRemoveOrFixBroker.add(REPLICATION_THROTTLE_PARAM);
+    addRemoveOrFixBroker.add(REVIEW_ID_PARAM);
+
+    Set<String> addBroker = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    addBroker.add(THROTTLE_ADDED_BROKER_PARAM);
+    addBroker.add(BROKER_ID_PARAM);
+    addBroker.addAll(addRemoveOrFixBroker);
+    Set<String> removeBroker = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    removeBroker.add(THROTTLE_REMOVED_BROKER_PARAM);
+    removeBroker.add(BROKER_ID_PARAM);
+    removeBroker.add(DESTINATION_BROKER_IDS_PARAM);
+    removeBroker.addAll(addRemoveOrFixBroker);
+    Set<String> fixOfflineReplicas = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    fixOfflineReplicas.addAll(addRemoveOrFixBroker);
+    fixOfflineReplicas.remove(KAFKA_ASSIGNER_MODE_PARAM);
+    Set<String> demoteBroker = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    demoteBroker.add(BROKER_ID_PARAM);
+    demoteBroker.add(DRY_RUN_PARAM);
+    demoteBroker.add(JSON_PARAM);
+    demoteBroker.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
+    demoteBroker.add(CONCURRENT_LEADER_MOVEMENTS_PARAM);
+    demoteBroker.add(VERBOSE_PARAM);
+    demoteBroker.add(SKIP_URP_DEMOTION_PARAM);
+    demoteBroker.add(EXCLUDE_FOLLOWER_DEMOTION_PARAM);
+    demoteBroker.add(EXCLUDE_RECENTLY_DEMOTED_BROKERS_PARAM);
+    demoteBroker.add(REPLICA_MOVEMENT_STRATEGIES_PARAM);
+    demoteBroker.add(REPLICATION_THROTTLE_PARAM);
+    demoteBroker.add(REVIEW_ID_PARAM);
+    demoteBroker.add(BROKER_ID_AND_LOGDIRS_PARAM);
+
+    Set<String> rebalance = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    rebalance.add(DRY_RUN_PARAM);
+    rebalance.add(GOALS_PARAM);
+    rebalance.add(KAFKA_ASSIGNER_MODE_PARAM);
+    rebalance.add(DATA_FROM_PARAM);
+    rebalance.add(JSON_PARAM);
+    rebalance.add(ALLOW_CAPACITY_ESTIMATION_PARAM);
+    rebalance.add(CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM);
+    rebalance.add(CONCURRENT_INTRA_BROKER_PARTITION_MOVEMENTS_PARAM);
+    rebalance.add(CONCURRENT_LEADER_MOVEMENTS_PARAM);
+    rebalance.add(SKIP_HARD_GOAL_CHECK_PARAM);
+    rebalance.add(EXCLUDED_TOPICS_PARAM);
+    rebalance.add(USE_READY_DEFAULT_GOALS_PARAM);
+    rebalance.add(VERBOSE_PARAM);
+    rebalance.add(EXCLUDE_RECENTLY_DEMOTED_BROKERS_PARAM);
+    rebalance.add(EXCLUDE_RECENTLY_REMOVED_BROKERS_PARAM);
+    rebalance.add(REPLICA_MOVEMENT_STRATEGIES_PARAM);
+    rebalance.add(IGNORE_PROPOSAL_CACHE_PARAM);
+    rebalance.add(REPLICATION_THROTTLE_PARAM);
+    rebalance.add(REVIEW_ID_PARAM);
+    rebalance.add(DESTINATION_BROKER_IDS_PARAM);
+    rebalance.add(REBALANCE_DISK_MODE_PARAM);
+
+    Set<String> kafkaClusterState = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    kafkaClusterState.add(VERBOSE_PARAM);
+    kafkaClusterState.add(JSON_PARAM);
+    kafkaClusterState.add(TOPIC_PARAM);
+    Set<String> pauseSampling = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    pauseSampling.add(REASON_PARAM);
+    pauseSampling.add(JSON_PARAM);
+    pauseSampling.add(REVIEW_ID_PARAM);
+    Set<String> resumeSampling = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    resumeSampling.add(REASON_PARAM);
+    resumeSampling.add(JSON_PARAM);
+    resumeSampling.add(REVIEW_ID_PARAM);
+    Set<String> stopProposalExecution = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    stopProposalExecution.add(JSON_PARAM);
+    stopProposalExecution.add(REVIEW_ID_PARAM);
+    Set<String> userTasks = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    userTasks.add(JSON_PARAM);
+    userTasks.add(USER_TASK_IDS_PARAM);
+    userTasks.add(CLIENT_IDS_PARAM);
+    userTasks.add(ENTRIES_PARAM);
+    userTasks.add(ENDPOINTS_PARAM);
+    userTasks.add(TYPES_PARAM);
+    userTasks.add(FETCH_COMPLETED_TASK_PARAM);
+    Set<String> admin = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    admin.add(JSON_PARAM);
+    admin.add(DISABLE_SELF_HEALING_FOR_PARAM);
+    admin.add(ENABLE_SELF_HEALING_FOR_PARAM);
+    admin.add(CONCURRENT_PARTITION_MOVEMENTS_PER_BROKER_PARAM);
+    admin.add(CONCURRENT_INTRA_BROKER_PARTITION_MOVEMENTS_PARAM);
+    admin.add(CONCURRENT_LEADER_MOVEMENTS_PARAM);
+    admin.add(DROP_RECENTLY_REMOVED_BROKERS_PARAM);
+    admin.add(DROP_RECENTLY_DEMOTED_BROKERS_PARAM);
+    admin.add(REVIEW_ID_PARAM);
+    Set<String> review = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    review.add(APPROVE_PARAM);
+    review.add(DISCARD_PARAM);
+    review.add(REASON_PARAM);
+    review.add(JSON_PARAM);
+    Set<String> reviewBoard = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    reviewBoard.add(JSON_PARAM);
+    reviewBoard.add(REVIEW_IDS_PARAM);
+    Set<String> topicConfiguration = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    topicConfiguration.add(JSON_PARAM);
+    topicConfiguration.add(TOPIC_PARAM);
+    topicConfiguration.add(REPLICATION_FACTOR_PARAM);
+    topicConfiguration.add(SKIP_RACK_AWARENESS_CHECK_PARAM);
+    topicConfiguration.add(REVIEW_IDS_PARAM);
+    validParamNames.put(BOOTSTRAP, Collections.unmodifiableSet(bootstrap));
+    validParamNames.put(TRAIN, Collections.unmodifiableSet(train));
+    validParamNames.put(LOAD, Collections.unmodifiableSet(load));
+    validParamNames.put(PARTITION_LOAD, Collections.unmodifiableSet(partitionLoad));
+    validParamNames.put(PROPOSALS, Collections.unmodifiableSet(proposals));
+    validParamNames.put(STATE, Collections.unmodifiableSet(state));
+    validParamNames.put(ADD_BROKER, Collections.unmodifiableSet(addBroker));
+    validParamNames.put(REMOVE_BROKER, Collections.unmodifiableSet(removeBroker));
+    validParamNames.put(DEMOTE_BROKER, Collections.unmodifiableSet(demoteBroker));
+    validParamNames.put(REBALANCE, Collections.unmodifiableSet(rebalance));
+    validParamNames.put(STOP_PROPOSAL_EXECUTION, Collections.unmodifiableSet(stopProposalExecution));
+    validParamNames.put(PAUSE_SAMPLING, Collections.unmodifiableSet(pauseSampling));
+    validParamNames.put(RESUME_SAMPLING, Collections.unmodifiableSet(resumeSampling));
+    validParamNames.put(KAFKA_CLUSTER_STATE, Collections.unmodifiableSet(kafkaClusterState));
+    validParamNames.put(USER_TASKS, Collections.unmodifiableSet(userTasks));
+    validParamNames.put(ADMIN, Collections.unmodifiableSet(admin));
+    validParamNames.put(REVIEW, Collections.unmodifiableSet(review));
+    validParamNames.put(REVIEW_BOARD, Collections.unmodifiableSet(reviewBoard));
+    validParamNames.put(TOPIC_CONFIGURATION, Collections.unmodifiableSet(topicConfiguration));
+    VALID_ENDPOINT_PARAM_NAMES = Collections.unmodifiableMap(validParamNames);
+  }
 
   private ParameterUtils() {
   }
@@ -309,6 +500,21 @@ public class ParameterUtils {
   static boolean throttleAddedOrRemovedBrokers(HttpServletRequest request, EndPoint endPoint) {
     return endPoint == ADD_BROKER ? getBooleanParam(request, THROTTLE_ADDED_BROKER_PARAM, true)
                                   : getBooleanParam(request, THROTTLE_REMOVED_BROKER_PARAM, true);
+  }
+
+  static Long replicationThrottle(HttpServletRequest request, KafkaCruiseControlConfig config) {
+    String parameterString = caseSensitiveParameterName(request.getParameterMap(), REPLICATION_THROTTLE_PARAM);
+    Long value;
+    if (parameterString == null) {
+      value = config.getLong(KafkaCruiseControlConfig.DEFAULT_REPLICATION_THROTTLE_CONFIG);
+    } else {
+      value = Long.parseLong(request.getParameter(parameterString));
+    }
+    if (value != null && value < 0) {
+      throw new IllegalArgumentException("The requested rebalance throttle must be non-negative (Requested: "
+              + value.toString() + ").");
+    }
+    return value;
   }
 
   static boolean capacityOnly(HttpServletRequest request) {
