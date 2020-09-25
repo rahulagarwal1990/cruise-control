@@ -71,7 +71,7 @@ subprojects {
   //code quality and inspections
   checkstyle {
     toolVersion = '8.1'
-    ignoreFailures = false
+    ignoreFailures = true
     configFile = rootProject.file('checkstyle/checkstyle.xml')
   }
 
