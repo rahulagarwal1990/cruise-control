@@ -216,9 +216,6 @@ public class ParameterUtils {
     removeBroker.add(BROKER_ID_PARAM);
     removeBroker.add(DESTINATION_BROKER_IDS_PARAM);
     removeBroker.addAll(addRemoveOrFixBroker);
-    Set<String> fixOfflineReplicas = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-    fixOfflineReplicas.addAll(addRemoveOrFixBroker);
-    fixOfflineReplicas.remove(KAFKA_ASSIGNER_MODE_PARAM);
     Set<String> demoteBroker = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     demoteBroker.add(BROKER_ID_PARAM);
     demoteBroker.add(DRY_RUN_PARAM);

@@ -27,7 +27,7 @@ class ReplicationThrottleHelper {
     ZkUtils zkUtils;
 
     ReplicationThrottleHelper(ZkUtils zkUtils, Long throttleRate) {
-        zkUtils = zkUtils;
+        this.zkUtils = zkUtils;
         this._throttleRate = throttleRate;
     }
 
