@@ -9,14 +9,7 @@ import kafka.utils.ZkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,8 +108,8 @@ class ReplicationThrottleHelper {
     private Set<Integer> getParticipatingBrokers(List<ExecutionProposal> replicaMovementProposals) {
         Set<Integer> participatingBrokers = new TreeSet<>();
         for (ExecutionProposal proposal : replicaMovementProposals) {
-            participatingBrokers.addAll(proposal.oldReplicas().stream().map(ReplicaPlacementInfo::brokerId).collect(Collectors.toSet()));
-            participatingBrokers.addAll(proposal.newReplicas().stream().map(ReplicaPlacementInfo::brokerId).collect(Collectors.toSet()));
+            participatingBrokers.addAll(new HashSet<>(proposal.oldReplicas()));
+            participatingBrokers.addAll(new HashSet<>(proposal.newReplicas()));
         }
         return participatingBrokers;
     }
@@ -127,8 +120,8 @@ class ReplicationThrottleHelper {
             String topic = proposal.topic();
             int partitionId = proposal.partitionId();
             Stream<Integer> brokers = Stream.concat(
-                    proposal.oldReplicas().stream().map(ReplicaPlacementInfo::brokerId),
-                    proposal.replicasToAdd().stream().map(ReplicaPlacementInfo::brokerId));
+                    proposal.oldReplicas().stream(),
+                    proposal.replicasToAdd().stream());
             Set<String> throttledReplicas = throttledReplicasByTopic
                     .computeIfAbsent(topic, (x) -> new TreeSet<>());
             brokers.forEach((brokerId) -> throttledReplicas.add(partitionId + ":" + brokerId));
