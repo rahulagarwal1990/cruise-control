@@ -81,7 +81,7 @@ subprojects {
     ignoreFailures = false
   }
 
-  test.dependsOn('checkstyleMain', 'checkstyleTest', 'findbugsMain', 'findbugsTest')
+  test.dependsOn('findbugsMain', 'findbugsTest')
 
   tasks.withType(FindBugs) {
     reports {
