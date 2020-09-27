@@ -12,7 +12,7 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import org.apache.commons.io.FileUtils;
 import org.apache.kafka.common.network.ListenerName;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import scala.Option;
 import scala.collection.mutable.ArrayBuffer;

@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.protocol.SecurityProtocol;
 
 
 public abstract class CCKafkaIntegrationTestHarness extends CCAbstractZookeeperTestHarness {

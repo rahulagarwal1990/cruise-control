@@ -11,7 +11,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.common.network.Mode;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.test.TestSslUtils;
 
 
